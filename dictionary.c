@@ -1,59 +1,72 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   dictionary.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mukibrok <mukibrok@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/10/20 20:25:27 by mukibrok          #+#    #+#             */
+/*   Updated: 2024/10/20 23:06:08 by mukibrok         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "rush.h"
-#include <stdio.h>
 
-int parse_dictionary(const char *filename, DictEntry dictionary[], int *size) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        return 1;
-    }
-
-    char line[256];
-    while (fgets(line, sizeof(line), file) && *size < MAX_DICTIONARY_SIZE) 
-    {
-        char *key = strtok(line, ":");
-        char *value = strtok(NULL, "\n");
-        
-        if (key && value) 
-        {
-            dictionary[*size].key = strdup(key);
-            dictionary[*size].value = strdup(value);
-            printf("Parsed Key: %s, Value: %s\n", key, value);
-
-            (*size)++;
-        }
-    }
-    fclose(file);
-    return 0;
-}
-
-void convert_to_words(char *num, DictEntry dictionary[], int size) {
-    int i;
-
-    i = 0;
-    while (i < size)
-    {
-        if (ft_strcmp(num, dictionary[i].key) == 0) 
-        {
-            ft_putstr(dictionary[i].value);
-            write(1, "\n", 1);
-            return;
-        }
-        printf("%s\n", dictionary[i].key);
-        printf("my number");
-        printf("%s\n", num);
-        i++;
-    }
-    ft_putstr("Dict Error\n");
-}
-
-void free_dictionary(DictEntry dictionary[], int size) 
+int	process_line(char *line, DictEntry dictionary[], int *size)
 {
-    int i;
-    i = 0;
-    while (i < size)
-    {
-        free(dictionary[i].key);
-        free(dictionary[i].value);
-        i++;
-    }
+	char	*key;
+	char	*value;
+
+	key = ft_strtok(line, ":");
+	value = ft_strtok(NULL, "");
+	if (key && value) 
+	{
+		dictionary[*size].key = ft_strdup(key);
+		dictionary[*size].value = ft_strdup(value);
+		return (*size)++;
+	}
+	return (0);
+}
+
+int	parse_dictionary(const char *filename, DictEntry dictionary[], int *size)
+{
+	int			fd;
+	char		buf[BUFFER_SIZE];
+	char		*next_line;
+	char		*line;
+	int			bytesread;
+
+	fd = open(filename, O_RDONLY);
+	*size = 0;
+	while (1)
+	{
+		bytesread = read(fd, buf, sizeof(buf) - 1);
+		if (bytesread <= 0 || *size >= MAX_SIZE)
+			break ;
+		buf[bytesread] = '\0';
+		line = buf;
+		while (*line)
+		{
+			next_line = ft_strchr(line, '\n');
+			if (next_line) 
+				*next_line = '\0';
+			process_line(line, dictionary, size);
+			line = next_line ? next_line + 1 : NULL;
+		}
+	}
+	close(fd);
+	return (0);
+}
+
+void	free_dictionary(DictEntry dictionary[], int size)
+{
+	int	i;
+
+	i = 0;
+	while (i < size)
+	{
+		free(dictionary[i].key);
+		free(dictionary[i].value);
+		i++;
+	}
 }
